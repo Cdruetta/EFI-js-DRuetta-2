@@ -1,53 +1,71 @@
-import { Field, ErrorMessage, Formik } from 'formik'
-import * as Yup from 'yup'
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LoginUser = () => {
+    const [message, setMessage] = useState('');
+    const navigate = useNavigate(); 
+
     const onLoginUser = async (values) => {
-        const bodyLoginUser = btoa(`${values.username}:${values.password}`)
-        
+        const bodyLoginUser = btoa(
+            `${values.username}:${values.password}`
+        );
 
-        try {
-            const response = await fetch('http://127.0.0.1:5000/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    "Authorization": `Basic ${bodyLoginUser}` 
-                } 
+        const response = await fetch('http://127.0.0.1:5000/login', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Basic ${bodyLoginUser}`  
+            },
+            body: JSON.stringify({
+                username: values.username,
+                password: values.password
             })
+        });
 
-            if(!response.ok) {
-                console.log("Error en la solicitud")
-            }            
-            
-            const data = await response.json()
-
-            if (response.ok) {
-                localStorage.setItem('token', JSON.stringify(data.Token))
-            } else {
-                console.error("Login failed", data)
-            }
-        } catch (error) {
-            console.error("An error occurred", error)
+        if (!response.ok) {
+            console.log("Hubo un error en la llamada a la API");
+            setMessage('Error en la conexión con el servidor');
+            return;
         }
-    }
+
+        const data = await response.json();
+
+        if (data.Token) {
+            console.log('Token recibido', data.Token);
+            localStorage.setItem('token', JSON.stringify(data.Token));
+            setMessage('Inicio de sesión exitoso');
+
+            setTimeout(() => {
+                navigate('/'); 
+            }, 1500);  
+        } else {
+            console.log('No se recibió el token');
+            setMessage('Nombre o usuario incorrecto');
+        }
+
+        console.log(data.Token);
+    };    
 
     const ValidationSchema = Yup.object().shape({
-        password: Yup.string()
-            .required('Este es un campo requerido')
-            .min(3, 'Esta contraseña debe tener al menos 5 caracteres'),  // Cambiado el mínimo a 5
         username: Yup.string()
-            .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')  // Corregido el mensaje mínimo
-            .max(20, 'El nombre de usuario no debe exceder los 20 caracteres')
-            .required('El nombre de usuario es requerido'),
-    })
+            .required('Debes ingresar un nombre de usuario')
+            .min(3, 'minimo 3 caracteres')
+            .max(20, 'maximo 20 caracteres'),
+        password: Yup.string()
+            .required('Requerido')
+            .min(5, 'minimo 5 caracteres'),  
+    });
 
     return (
         <Formik
             initialValues={{ password: '', username: '' }}
             validationSchema={ValidationSchema}
             onSubmit={(values, { setSubmitting }) => {
-                onLoginUser(values)
-                setSubmitting(false)
+                console.log('Formulario enviado', values);
+                onLoginUser(values);
+                setSubmitting(false);
             }}
         >
             {({
@@ -87,13 +105,19 @@ const LoginUser = () => {
                             <div style={{ color: 'red' }}>{errors.password}</div>
                         )}
                     </div>
-                    <button type="submit" disabled={isSubmitting || !isValid}>
+                    <button type="submit" disabled={values.password === '' || values.username === '' || !isValid || isSubmitting}>
                         Iniciar Sesión
                     </button>
+                    {message && (
+                        <div style={{ padding: '5px', marginTop: '20px', backgroundColor: 'red', border: '2px solid white' }}>
+                            {message}
+                        </div>
+                        )}
                 </form>
             )}
         </Formik>
-    )
-}
+        
+    );
+};
 
-export default LoginUser
+export default LoginUser;

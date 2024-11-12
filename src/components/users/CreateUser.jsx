@@ -1,46 +1,46 @@
-import { Field, ErrorMessage, Formik } from 'formik';
+import { Formik, Field } from 'formik';
 import * as Yup from 'yup';
+import { useState } from 'react';
+import { useNavigate} from 'react-router-dom';
 
 const CreateUser = () => {
-  const token = JSON.parse(localStorage.getItem('token'));
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate(); 
+
+  const ValidationSchema = Yup.object().shape({
+    username: Yup.string()
+      .required('Deber tener un nombre de usuario')
+      .min(5, 'minimo 5 caracteres')
+      .max(20, 'maximo 20 caracteres'),
+    password: Yup.string()
+      .required('Requerido')
+      .min(5, 'minimo 5 caracteres')
+      .max(20, 'maximo 20 caracteres'),
+  })
+
+  const token = JSON.parse(localStorage.getItem('token'))
 
   const RegisterUser = async (values) => {
-    const bodyRegisterUser = {
-      username: values.username,
-      password: values.password,
-      isAdmin: false,
-    };
-    console.log('bodyRegisterUser', bodyRegisterUser);
 
-    try {
-      const response = await fetch('http://127.0.0.1:5000/users', {
+    const bodyRegisterUser = {
+      usuario: values.username,
+      contrasenia: values.password,
+    }
+    const response = await fetch('http://127.0.0.1:5000/users', {
         method: 'POST',
         body: JSON.stringify(bodyRegisterUser),
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `${token}`,
+          'Authorization': `Bearer ${token}`,
         },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al registrar el usuario');
-      }
-
-      console.log('Usuario creado exitosamente');
-    } catch (error) {
-      console.error('Error en el registro', error);
+    })
+    console.log(response);
+    if (!response.ok) {
+      console.log("Hubo un error en la llamada a la API");
+      setMessage('Error en la conexión con el servidor');
+      return;
     }
-  };
-
-  const ValidationSchema = Yup.object().shape({
-    password: Yup.string()
-      .required('Este es un campo requerido')
-      .min(5, 'La contraseña debe tener al menos 5 caracteres'),
-    username: Yup.string()
-      .min(3, 'El nombre de usuario debe tener al menos 3 caracteres')
-      .max(20, 'El nombre de usuario no debe exceder los 20 caracteres')
-      .required('El nombre de usuario es requerido'),
-  });
+  }
 
   return (
     <Formik
@@ -58,7 +58,7 @@ const CreateUser = () => {
         handleChange,
         handleBlur,
         handleSubmit,
-        isSubmitting,
+        isValid
       }) => (
         <form onSubmit={handleSubmit}>
           <div>
@@ -70,7 +70,8 @@ const CreateUser = () => {
               onBlur={handleBlur}
               value={values.username}
             />
-            <ErrorMessage name="username" component="div" />
+            {errors.username && touched.username && errors.username}
+            <div style={{ color: 'red' }}>{errors.password}</div>
           </div>
           <div>
             <label htmlFor="password">Contraseña:</label>
@@ -81,11 +82,17 @@ const CreateUser = () => {
               onBlur={handleBlur}
               value={values.password}
             />
-            <ErrorMessage name="password" component="div" />
+            {errors.password && touched.password && errors.password}
+            <div style={{ color: 'red' }}>{errors.password}</div>
           </div>
-          <button type="submit" disabled={isSubmitting}>
+          <button onClick={() => RegisterUser(values)} type="submit" disabled={values.password === '' || values.username === '' || !isValid}>
             Crear Usuario
           </button>
+          {message && (
+            <div style={{ padding: '5px', marginTop: '20px', backgroundColor: 'red', border: '2px solid white' }}>
+                {message}
+            </div>
+          )}
         </form>
       )}
     </Formik>

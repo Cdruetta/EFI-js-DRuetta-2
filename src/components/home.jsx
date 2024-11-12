@@ -4,6 +4,9 @@ const Home = () => {
         <h1>DRUETTZILLA</h1>
       </div>
     );
+    
   };
   
   export default Home;
+
+  

@@ -1,37 +1,45 @@
-import { useState, useEffect, } from "react";
-import UsersView from "./UserView";
+import { useState, useEffect, Fragment } from 'react'
+import UsersView from './UserView';
 
-const UserContainer = () => {
-    const [data, setData] = useState([]);
-    const [loadingData, setLoadingData] = useState(true);
+const UsersContainer = () => {
+    const [dataUsers, setDataUsers] = useState([]),
+        [loadingUsers, setLoadingUsers] = useState(true);
 
+    const token = JSON.parse(localStorage.getItem('token'))
 
-    const token =JSON.parse(localStorage.getItem('token'))
-    console.log("token", token)
-    
-    const getDataUser = async () => {
+    const getDataUsers = async () => {
         try {
-            const response = await fetch("http://localhost:5000/users",{headers: {"Authorization": `${token}`}});
-
+            const response = await fetch("http://127.0.0.1:5000/users",
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                }
+            )
+            console.log("response", response)
             if (!response.ok) {
-                console.log("Hubo un error en la consulta");
+                console.log("Hubo un error en la peticion")
             }
-            const results = await response.json();
-            setData(results);
-        } catch {
-            console.log("Error en la API");
+
+            const results = await response.json()
+            setDataUsers(results)
+        } catch (error) {
+            console.log("Hubo un error en la api ", error)
         } finally {
-            setLoadingData(false);
+            setLoadingUsers(false)
         }
-    };
+    }
 
     useEffect(() => {
-        getDataUser();
-    }, []);
+        getDataUsers()
+    }, [])
 
     return (
-        <UsersView loadingData={loadingData} data={data}/>
-    );
-};
-
-export default UserContainer;
+        <UsersView 
+            loadingUsers={loadingUsers} 
+            dataUsers={dataUsers}
+            setDataUsers={setDataUsers}
+        />
+    )
+}
+export default UsersContainer
