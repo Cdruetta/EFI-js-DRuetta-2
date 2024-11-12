@@ -54,6 +54,18 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.custom-button-modificar {
+  background-color: #abe7ad; /* Fondo verde */
+  color: rgb(69, 67, 67); /* Texto blanco */
+  border: none;
+}
+
+.custom-button-eliminar {
+  background-color: #f1a9a4; /* Fondo rojo */
+  color: rgb(69, 67, 67);; /* Texto blanco */
+  border: none;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
